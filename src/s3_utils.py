@@ -53,3 +53,59 @@ def download_latest_file(file_name, local_path):
 
     print(f"Downloaded: {latest}")
     return local_path
+
+
+def list_versions(file_name):
+    """List all available versions of a file (sorted by timestamp, newest first).
+    
+    Example: list_versions('model.pkl') -> ['20260430-120000', '20260429-150000', ...]
+    """
+    response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix="models/")
+    contents = response.get("Contents", [])
+    
+    versions = {}
+    for obj in contents:
+        key = obj["Key"]
+        if key.endswith(file_name):
+            # Extract timestamp from path like "models/20260430-120000/model.pkl"
+            parts = key.split("/")
+            if len(parts) >= 2:
+                timestamp = parts[1]
+                versions[timestamp] = key
+    
+    return sorted(versions.keys(), reverse=True), versions
+
+
+def download_file_by_version(file_name, version_timestamp, local_path):
+    """Download a specific version of a file by timestamp.
+    
+    Args:
+        file_name: e.g., 'model.pkl'
+        version_timestamp: e.g., '20260430-120000'
+        local_path: where to save locally
+    
+    Example: download_file_by_version('scaler.pkl', '20260430-120000', 'models/scaler.pkl')
+    """
+    response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix="models/")
+    contents = response.get("Contents", [])
+    
+    target_key = None
+    for obj in contents:
+        key = obj["Key"]
+        if key.endswith(file_name) and version_timestamp in key:
+            target_key = key
+            break
+    
+    if not target_key:
+        raise FileNotFoundError(
+            f"No file {file_name} with version {version_timestamp} found in S3 bucket {BUCKET_NAME}."
+        )
+    
+    # ensure local directory exists
+    local_dir = os.path.dirname(local_path)
+    if local_dir and not os.path.exists(local_dir):
+        os.makedirs(local_dir, exist_ok=True)
+    
+    s3.download_file(BUCKET_NAME, target_key, local_path)
+    print(f"Downloaded version {version_timestamp}: {target_key}")
+    return local_path

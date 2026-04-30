@@ -1,0 +1,22 @@
+stages:
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - data/loan_data.csv
+      - src/preprocess.py
+    outs:
+      - models/scaler.pkl
+      - models/label_encoder.pkl
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - src/preprocess.py
+      - data/loan_data.csv
+      - src/s3_utils.py
+    outs:
+      - models/model.pkl
+    metrics:
+      - metrics.json:
+          cache: false

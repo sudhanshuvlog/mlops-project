@@ -11,6 +11,7 @@ pipeline {
 
         stage('Train Model') {
             steps {
+                sh 'mkdir -p models'
                 sh 'python3 src/train.py'
             }
         }
@@ -23,7 +24,8 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d -p 8000:8000 loan-risk-app'
+                sh 'docker rm -f webapp || true'
+                sh 'docker run -d --name webapp -p 8000:8000 loan-risk-app'
             }
         }
     }

@@ -1,23 +1,18 @@
 pipeline {
      agent {label "ec2" }
 
-    parameters {
-        choice(
-            name: 'SKIP_TRAINING',
-            choices: ['false', 'true'],
-            description: 'Skip training and reuse latest artifacts from S3'
-        )
-        string(
-            name: 'MODEL_VERSION',
-            defaultValue: '',
-            description: 'Optional: specific model version timestamp to rollback to (e.g., 20260430-120000). Leave blank for latest.'
-        )
-        choice(
-            name: 'PUSH_TO_S3',
-            choices: ['true', 'false'],
-            description: 'Push DVC artifacts (data/models) to S3 after training'
-        )
-    }
+    // parameters {
+    //     string(
+    //         name: 'MODEL_VERSION',
+    //         defaultValue: '',
+    //         description: 'Optional: specific model version timestamp to rollback to (e.g., 20260430-120000). Leave blank for latest.'
+    //     )
+    //     choice(
+    //         name: 'PUSH_TO_S3',
+    //         choices: ['true', 'false'],
+    //         description: 'Push DVC artifacts (data/models) to S3 after training'
+    //     )
+    // }
 
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws_access_key_id')
@@ -62,9 +57,6 @@ pipeline {
         }
 
         stage('Train Model with DVC Pipeline') {
-            when {
-                expression { params.SKIP_TRAINING == 'false' }
-            }
             steps {
                 sh '''
                     mkdir -p models
@@ -94,9 +86,9 @@ pipeline {
         }
 
         stage('Push Artifacts to S3 (DVC)') {
-            when {
-                expression { params.PUSH_TO_S3 == 'true' }
-            }
+            // when {
+            //     expression { params.PUSH_TO_S3 == 'true' }
+            // }
             steps {
                 sh '''
                     # Push models/data to S3 using DVC
@@ -127,9 +119,9 @@ pipeline {
                 script {
                     def envVars = "-e AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=ap-south-1"
                     
-                    if (params.MODEL_VERSION) {
-                        envVars += " -e MODEL_VERSION=${params.MODEL_VERSION}"
-                    }
+                    // if (params.MODEL_VERSION) {
+                    //     envVars += " -e MODEL_VERSION=${params.MODEL_VERSION}"
+                    // }
                     
                     // Optional: pass MLflow tracking URI if needed
                     envVars += " -e MLFLOW_TRACKING_URI=\$MLFLOW_TRACKING_URI"
@@ -153,23 +145,23 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // Collect artifacts for Jenkins archival
-            sh 'mkdir -p artifacts'
-            sh 'cp -r dvc.lock metrics.json models/ artifacts/ || echo "No artifacts to collect"'
+    // post {
+    //     always {
+    //         // Collect artifacts for Jenkins archival
+    //         sh 'mkdir -p artifacts'
+    //         sh 'cp -r dvc.lock metrics.json models/ artifacts/ || echo "No artifacts to collect"'
             
-            // Archive DVC lock file (shows reproducible pipeline state)
-            archiveArtifacts artifacts: 'artifacts/dvc.lock', allowEmptyArchive: true
-        }
-        failure {
-            echo "Pipeline failed. Check MLflow UI for experiment details."
-            echo "Rollback command: set MODEL_VERSION to a previous timestamp"
-        }
-        success {
-            echo "✓ Pipeline completed successfully!"
-            echo "View metrics in MLflow: $MLFLOW_TRACKING_URI"
-            echo "DVC artifacts pushed to S3 (if PUSH_TO_S3=true)"
-        }
-    }
+    //         // Archive DVC lock file (shows reproducible pipeline state)
+    //         archiveArtifacts artifacts: 'artifacts/dvc.lock', allowEmptyArchive: true
+    //     }
+    //     failure {
+    //         echo "Pipeline failed. Check MLflow UI for experiment details."
+    //         echo "Rollback command: set MODEL_VERSION to a previous timestamp"
+    //     }
+    //     success {
+    //         echo "✓ Pipeline completed successfully!"
+    //         echo "View metrics in MLflow: $MLFLOW_TRACKING_URI"
+    //         echo "DVC artifacts pushed to S3 (if PUSH_TO_S3=true)"
+    //     }
+    // }
 }

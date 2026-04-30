@@ -1,3 +1,23 @@
 models/*
 src/__pycache__/*
 app.cpython-*
+# DVC
+.dvc/config.local
+.dvc/tmp/
+.dvc/cache/
+*.dvc
+!*.dvc  # unless you manually version files
+
+# MLflow
+mlruns/
+.mlflow/
+
+# Models (already in S3)
+models/*.pkl
+!models/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env

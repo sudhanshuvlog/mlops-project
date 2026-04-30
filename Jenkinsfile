@@ -30,6 +30,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh 'yum install -y python3 python3-pip docker git'
+                sh 'python3 -m venv venv'
+                sh 'source venv/bin/activate'
                 sh 'pip3 install -r requirements.txt'
                 sh 'dvc --version'  // verify DVC installed
                 sh 'mlflow --version'  // verify MLflow installed
@@ -47,9 +49,14 @@ pipeline {
                     # Ensure remote is configured
                     dvc remote list | grep -q myremote || dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
                     
-                    # Fetch latest from remote (pulls data if needed)
-                    dvc fetch || echo "Warning: dvc fetch failed (may be first run)"
-                    dvc checkout || echo "Warning: dvc checkout failed"
+                    # Only fetch/checkout if dvc.lock exists (means pipeline has run before)
+                    if [ -f dvc.lock ]; then
+                        echo "dvc.lock found. Fetching artifacts from S3..."
+                        dvc fetch || echo "Warning: dvc fetch failed"
+                        dvc checkout --force || echo "Warning: dvc checkout failed"
+                    else
+                        echo "First run detected (no dvc.lock). Skipping fetch/checkout."
+                    fi
                 '''
             }
         }

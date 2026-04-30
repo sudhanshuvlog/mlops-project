@@ -24,12 +24,20 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                sh 'yum install -y python3 python3-pip docker git'
-                sh 'python3 -m venv venv'
-                sh 'source venv/bin/activate'
-                sh 'pip3 install -r requirements.txt'
-                sh 'dvc --version'  // verify DVC installed
-                sh 'mlflow --version'  // verify MLflow installed
+                sh '''
+                    yum install -y python3 python3-pip docker git
+                    
+                    # Create virtual environment
+                    python3 -m venv venv
+                    
+                    # Install in one go (venv path included)
+                    ./venv/bin/pip install --upgrade pip setuptools wheel
+                    ./venv/bin/pip install -r requirements.txt --no-cache-dir
+                    
+                    # Verify
+                    ./venv/bin/dvc --version
+                    ./venv/bin/mlflow --version
+                '''
             }
         }
 
@@ -38,17 +46,17 @@ pipeline {
                 sh '''
                     # Initialize DVC if not already done
                     if [ ! -d .dvc ]; then
-                        dvc init -f --no-scm
+                        ./venv/bin/dvc init -f --no-scm
                     fi
                     
                     # Ensure remote is configured
-                    dvc remote list | grep -q myremote || dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
+                    ./venv/bin/dvc remote list | grep -q myremote || ./venv/bin/dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
                     
                     # Only fetch/checkout if dvc.lock exists (means pipeline has run before)
                     if [ -f dvc.lock ]; then
                         echo "dvc.lock found. Fetching artifacts from S3..."
-                        dvc fetch || echo "Warning: dvc fetch failed"
-                        dvc checkout --force || echo "Warning: dvc checkout failed"
+                        ./venv/bin/dvc fetch || echo "Warning: dvc fetch failed"
+                        ./venv/bin/dvc checkout --force || echo "Warning: dvc checkout failed"
                     else
                         echo "First run detected (no dvc.lock). Skipping fetch/checkout."
                     fi
@@ -63,10 +71,10 @@ pipeline {
                     
                     # Run reproducible DVC pipeline (preprocess + train)
                     # DVC caches stages, so unchanged stages won't re-run
-                    dvc repro
+                    ./venv/bin/dvc repro
                     
                     # View pipeline DAG (for debugging)
-                    dvc dag
+                    ./venv/bin/dvc dag
                 '''
             }
         }
@@ -76,11 +84,11 @@ pipeline {
                 sh '''
                     # Display DVC pipeline status (what changed)
                     echo "=== DVC Pipeline Status ==="
-                    dvc status
+                    ./venv/bin/dvc status
                     
                     # If MLflow server is running, pull recent runs
                     echo "=== Recent MLflow Runs ==="
-                    mlflow runs list --experiment-name "loan-risk-prediction" --max-results 5 || echo "MLflow not accessible (OK if server not running)"
+                    ./venv/bin/mlflow runs list --experiment-name "loan-risk-prediction" --max-results 5 || echo "MLflow not accessible (OK if server not running)"
                 '''
             }
         }
@@ -93,12 +101,12 @@ pipeline {
                 sh '''
                     # Push models/data to S3 using DVC
                     echo "Pushing DVC artifacts to S3..."
-                    dvc push
+                    ./venv/bin/dvc push
                     
                     # Verify push succeeded
                     if [ $? -eq 0 ]; then
                         echo "✓ DVC push to S3 completed successfully"
-                        dvc status --cloud
+                        ./venv/bin/dvc status --cloud
                     else
                         echo "✗ DVC push failed"
                         exit 1

@@ -84,7 +84,7 @@ def train():
     import json
 
     metrics = {
-        "accuracy": accuracy,
+        "accuracy": acc,
         "precision": precision,
         "recall": recall,
         "f1": f1

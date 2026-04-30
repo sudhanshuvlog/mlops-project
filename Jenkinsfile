@@ -64,6 +64,18 @@ pipeline {
             }
         }
 
+        stage('start mlflow server') {
+            steps {
+                sh '''
+                    nohup ./venv/bin/mlflow server \
+                        --backend-store-uri sqlite:///mlflow.db \
+                        --default-artifact-root ./mlruns \
+                        --host 0.0.0.0 \
+                        --port 5000 &
+                '''
+            }
+        }
+
         stage('Train Model with DVC Pipeline') {
             steps {
                 sh '''

@@ -27,6 +27,19 @@ def train():
     s3_path = upload_model("models/model.pkl")
     print(f"Model stored at: {s3_path}")
 
+    # Also upload scaler and label encoder saved during preprocessing
+    try:
+        scaler_path = upload_model("models/scaler.pkl", model_name="scaler.pkl")
+        print(f"Scaler stored at: {scaler_path}")
+    except Exception as e:
+        print(f"Warning: failed to upload scaler: {e}")
+
+    try:
+        le_path = upload_model("models/label_encoder.pkl", model_name="label_encoder.pkl")
+        print(f"Label encoder stored at: {le_path}")
+    except Exception as e:
+        print(f"Warning: failed to upload label encoder: {e}")
+
 
 if __name__ == "__main__":
     train()

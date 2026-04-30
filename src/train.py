@@ -3,7 +3,7 @@ import joblib
 from xgboost import XGBClassifier
 from preprocess import preprocess_data
 from sklearn.metrics import accuracy_score
-from src.s3_utils import upload_model
+from s3_utils import upload_model
 
 def train():
     df = pd.read_csv("data/loan_data.csv")

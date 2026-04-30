@@ -1,6 +1,6 @@
 import joblib
 import numpy as np
-from src.s3_utils import download_latest_file
+from s3_utils import download_latest_file
 
 # Ensure we have latest model, scaler and label encoder from S3
 download_latest_file("scaler.pkl", "models/scaler.pkl")

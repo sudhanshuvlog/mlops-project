@@ -33,7 +33,7 @@ pipeline {
                     # Install in one go (venv path included)
                     ./venv/bin/pip install --upgrade pip setuptools wheel
                     ./venv/bin/pip install -r requirements.txt --no-cache-dir
-                    ./venv/bin/pip install --force-reinstall setuptools
+                    ./venv/bin/pip install setuptools==69.5.1 wheel==0.42.0 packaging==24.0
                     # Verify
                     ./venv/bin/dvc --version
                     ./venv/bin/mlflow --version

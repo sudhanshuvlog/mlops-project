@@ -81,6 +81,18 @@ def train():
         mlflow.register_model("runs:/{}/model".format(mlflow.active_run().info.run_id), "LoanRiskModel")
         print("Model registered in MLflow registry as 'LoanRiskModel'")
 
+    import json
+
+    metrics = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1
+    }
+
+    with open("metrics.json", "w") as f:
+        json.dump(metrics, f)
+
 
 if __name__ == "__main__":
     train()

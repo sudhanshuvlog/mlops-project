@@ -25,7 +25,7 @@ pipeline {
         stage('Run Container') {
             steps {
                 sh 'docker rm -f webapp || true'
-                sh 'docker run -d --name webapp -p 8000:8000 loan-risk-app'
+                sh 'docker run -d --name webapp -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION="ap-south-1" -p 8000:8000 loan-risk-app'
             }
         }
     }

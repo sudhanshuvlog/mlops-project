@@ -2,10 +2,18 @@ import boto3
 import os
 from datetime import datetime
 
-s3 = boto3.client("s3")
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = "ap-south-1"
 
 BUCKET_NAME = "mlops-loan-risk-gfg"
 
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+    region_name=AWS_REGION
+)
 
 def upload_model(file_path, model_name="model.pkl"):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

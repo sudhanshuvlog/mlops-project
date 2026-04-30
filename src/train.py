@@ -36,9 +36,9 @@ def train():
         
         # Calculate metrics
         acc = accuracy_score(y_test, preds)
-        precision = precision_score(y_test, preds)
-        recall = recall_score(y_test, preds)
-        f1 = f1_score(y_test, preds)
+        precision = precision_score(y_test, preds, average='weighted')
+        recall = recall_score(y_test, preds, average='weighted')
+        f1 = f1_score(y_test, preds, average='weighted')
 
         print(f"Model Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}")
 

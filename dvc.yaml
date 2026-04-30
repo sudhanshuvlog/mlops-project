@@ -1,6 +1,6 @@
 stages:
   preprocess:
-    cmd: python src/preprocess.py
+    cmd: python3 src/preprocess.py
     deps:
       - data/loan_data.csv
       - src/preprocess.py

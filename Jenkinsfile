@@ -30,7 +30,7 @@ pipeline {
                     # Create virtual environment
                     python3 -m venv venv
                     
-                    # Install in one go (venv path included)
+                    # Install required packages (venv path included)
                     ./venv/bin/pip install --upgrade pip setuptools wheel
                     ./venv/bin/pip install -r requirements.txt --no-cache-dir
                     ./venv/bin/pip install setuptools==69.5.1 wheel==0.42.0 packaging==24.0
@@ -81,7 +81,6 @@ pipeline {
             steps {
                 sh '''
                     # Display DVC pipeline status (what changed)
-                    echo "=== DVC Pipeline Status ==="
                     ./venv/bin/dvc status
                     
                     # If MLflow server is running, pull recent runs
@@ -92,9 +91,6 @@ pipeline {
         }
 
         stage('Push Artifacts to S3 (DVC)') {
-            // when {
-            //     expression { params.PUSH_TO_S3 == 'true' }
-            // }
             steps {
                 sh '''
                     # Push models/data to S3 using DVC
@@ -103,10 +99,10 @@ pipeline {
                     
                     # Verify push succeeded
                     if [ $? -eq 0 ]; then
-                        echo "✓ DVC push to S3 completed successfully"
+                        echo "DVC push to S3 completed successfully"
                         ./venv/bin/dvc status --cloud
                     else
-                        echo "✗ DVC push failed"
+                        echo "DVC push failed"
                         exit 1
                     fi
                 '''

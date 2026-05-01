@@ -1,107 +1,141 @@
 pipeline {
-     agent {label "ec2" }
+    agent { label "ec2" }
 
-    // parameters {
-    //     string(
-    //         name: 'MODEL_VERSION',
-    //         defaultValue: '',
-    //         description: 'Optional: specific model version timestamp to rollback to (e.g., 20260430-120000). Leave blank for latest.'
-    //     )
-    //     choice(
-    //         name: 'PUSH_TO_S3',
-    //         choices: ['true', 'false'],
-    //         description: 'Push DVC artifacts (data/models) to S3 after training'
-    //     )
-    // }
+    parameters {
+        string(
+            name: 'MODEL_VERSION',
+            defaultValue: '',
+            description: 'Optional: specific model version to rollback to. Leave blank for latest.'
+        )
+        choice(
+            name: 'SKIP_TRAINING',
+            choices: ['false', 'true'],
+            description: 'Skip training and use existing model (for deployment only)'
+        )
+        string(
+            name: 'MIN_ACCURACY',
+            defaultValue: '0.70',
+            description: 'Minimum model accuracy threshold for quality gate'
+        )
+    }
 
     environment {
-        // AWS_ACCESS_KEY_ID = credentials('aws_access_key_id')
-        // AWS_SECRET_ACCESS_KEY = credentials('aws_secret_access_key')
         AWS_DEFAULT_REGION = 'ap-south-1'
-        MLFLOW_TRACKING_URI = 'http://localhost:5000'  // or remote MLflow server
+        MLFLOW_TRACKING_URI = 'http://localhost:5000'
+        MIN_MODEL_ACCURACY = "${params.MIN_ACCURACY}"
     }
 
     stages {
-        stage('Install Dependencies') {
+        stage('Setup Environment') {
             steps {
+                echo "Setting up Python environment..."
                 sh '''
+                    # Install system dependencies
                     yum install -y python3 python3-pip docker git
                     
                     # Create virtual environment
                     python3 -m venv venv
                     
-                    # Install required packages (venv path included)
+                    # Upgrade pip and install dependencies
                     ./venv/bin/pip install --upgrade pip setuptools wheel
                     ./venv/bin/pip install -r requirements.txt --no-cache-dir
-                    ./venv/bin/pip install setuptools==69.5.1 wheel==0.42.0 packaging==24.0
-                    # Verify
-                    ./venv/bin/dvc --version
-                    ./venv/bin/mlflow --version
-                '''
-            }
-        }
-
-        stage('pull data from s3 DVC') {
-            steps {
-                sh '''
-                    echo "Pulling data and models from DVC remote (S3)..."
-                    ./venv/bin/dvc pull
-                '''
-            }
-        }
-       
-
-        // stage('start mlflow server') {
-        //     steps {
-        //         sh '''
-        //             nohup ./venv/bin/mlflow server \
-        //                 --backend-store-uri sqlite:///mlflow.db \
-        //                 --default-artifact-root ./mlruns \
-        //                 --host 0.0.0.0 \
-        //                 --port 5000 &
-        //         '''
-        //     }
-        // }
-
-        stage('Train Model with DVC Pipeline') {
-            steps {
-                sh '''
-                    mkdir -p models
                     
-                    # Run reproducible DVC pipeline (preprocess + train)
-                    # DVC caches stages, so unchanged stages won't re-run
+                    # Verify installations
+                    echo "DVC Version: $(./venv/bin/dvc --version)"
+                    echo "MLflow Version: $(./venv/bin/mlflow --version)"
+                '''
+            }
+        }
+
+        stage('Pull Data from DVC Remote') {
+            steps {
+                echo "Pulling raw data from S3 via DVC..."
+                sh '''
+                    # Pull only raw data (DVC tracked files)
+                    ./venv/bin/dvc pull data/loan_data.csv.dvc
+                    
+                    # Verify data was pulled
+                    if [ -f "data/loan_data.csv" ]; then
+                        echo "Raw data pulled successfully"
+                        echo "Rows: $(wc -l < data/loan_data.csv)"
+                    else
+                        echo "Failed to pull data from DVC remote"
+                        exit 1
+                    fi
+                '''
+            }
+        }
+
+        stage('Run ML Pipeline') {
+            when {
+                expression { params.SKIP_TRAINING != 'true' }
+            }
+            steps {
+                echo "Running DVC reproducible pipeline..."
+                sh '''
+                    # Create necessary directories
+                    mkdir -p models data/processed
+                    
+                    # Run the full DVC pipeline
+                    # This executes: validation -> cleaning -> features -> train -> evaluate
+                    # DVC caches outputs - unchanged stages won't re-run
                     ./venv/bin/dvc repro
                     
-                    # View pipeline DAG (for debugging)
+                    # Show pipeline execution graph
+                    echo ""
+                    echo "Pipeline DAG:"
                     ./venv/bin/dvc dag
-                '''
-            }
-        }
-
-       
-        stage('Collect Metrics') {
-            steps {
-                sh '''
-                    # Display DVC pipeline status (what changed)
-                    ./venv/bin/dvc status
                     
-                    # If MLflow server is running, pull recent runs
-                    echo "=== Recent MLflow Runs ==="
-                    ./venv/bin/mlflow runs list --experiment-name "loan-risk-prediction" --max-results 5 || echo "MLflow not accessible (OK if server not running)"
+                    # Show what changed
+                    echo ""
+                    echo "Pipeline Status:"
+                    ./venv/bin/dvc status
                 '''
             }
         }
 
-        stage('Push Artifacts to S3 (DVC)') {
+        stage('Quality Gate') {
             steps {
+                echo "Checking model quality metrics..."
                 sh '''
-                    # Push models/data to S3 using DVC
-                    echo "Pushing DVC artifacts to S3..."
+                    if [ -f "metrics.json" ]; then
+                        echo "Model Metrics:"
+                        cat metrics.json | python3 -m json.tool
+                        
+                        # Extract accuracy and check threshold
+                        ACCURACY=$(python3 -c "import json; print(json.load(open('metrics.json'))['accuracy'])")
+                        THRESHOLD=${MIN_MODEL_ACCURACY}
+                        
+                        echo ""
+                        echo "Accuracy: $ACCURACY (threshold: $THRESHOLD)"
+                        
+                        PASS=$(python3 -c "print('yes' if $ACCURACY >= $THRESHOLD else 'no')")
+                        if [ "$PASS" = "no" ]; then
+                            echo "Model failed quality gate!"
+                            exit 1
+                        fi
+                        echo "Model passed quality gate!"
+                    else
+                        echo "Warning: No metrics.json found - skipping quality check"
+                    fi
+                '''
+            }
+        }
+
+        stage('Push Artifacts to S3') {
+            steps {
+                echo "Pushing all artifacts to S3 via DVC..."
+                sh '''
+                    # Push all DVC tracked outputs to S3
+                    # This includes: processed data, models, scalers
                     ./venv/bin/dvc push
                     
-                    # Verify push succeeded
                     if [ $? -eq 0 ]; then
-                        echo "DVC push to S3 completed successfully"
+                        echo "DVC push completed successfully"
+                        
+                        # Show what's in the remote
+                        echo ""
+                        echo "Cloud Status:"
                         ./venv/bin/dvc status --cloud
                     else
                         echo "DVC push failed"
@@ -111,48 +145,93 @@ pipeline {
             }
         }
 
-        // stage('Build Docker Image') {
-        //     steps {
-        //         sh 'docker build -t loan-risk-app .'
-        //     }
-        // }
-
-        stage('Run Container') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker rm -f webapp || true'
-                script {
-                    def envVars = "-e AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=ap-south-1"
+                echo "Building Docker image..."
+                sh '''
+                    # Build with cache
+                    docker build -t loan-risk-app:${BUILD_NUMBER} -t loan-risk-app:latest .
                     
-                    // if (params.MODEL_VERSION) {
-                    //     envVars += " -e MODEL_VERSION=${params.MODEL_VERSION}"
-                    // }
+                    echo "Docker image built: loan-risk-app:${BUILD_NUMBER}"
+                '''
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                echo "Deploying application container..."
+                sh '''
+                    # Stop existing container
+                    docker rm -f webapp || true
                     
-                    // Optional: pass MLflow tracking URI if needed
-                    envVars += " -e MLFLOW_TRACKING_URI=\$MLFLOW_TRACKING_URI"
+                    # Run new container
+                    docker run -d \
+                        --name webapp \
+                        -p 8000:8000 \
+                        -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
+                        -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+                        loan-risk-app:${BUILD_NUMBER}
                     
-                    sh "docker run -d --name webapp ${envVars} -p 8000:8000 loan-risk-app"
-                }
+                    # Wait for container to start
+                    sleep 5
+                    
+                    # Health check
+                    echo "Running health check..."
+                    HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ || echo "000")
+                    
+                    if [ "$HEALTH" = "200" ]; then
+                        echo "Application deployed and healthy!"
+                    else
+                        echo "Warning: Health check returned: $HEALTH"
+                        docker logs webapp
+                    fi
+                '''
             }
         }
     }
 
-    // post {
-    //     always {
-    //         // Collect artifacts for Jenkins archival
-    //         sh 'mkdir -p artifacts'
-    //         sh 'cp -r dvc.lock metrics.json models/ artifacts/ || echo "No artifacts to collect"'
+    post {
+        always {
+            echo "Collecting pipeline artifacts..."
+            sh '''
+                mkdir -p artifacts
+                cp -r metrics.json dvc.lock artifacts/ 2>/dev/null || true
+                cp -r models/*.pkl artifacts/ 2>/dev/null || true
+            '''
+            archiveArtifacts artifacts: 'artifacts/**', allowEmptyArchive: true
+        }
+        
+        success {
+            echo '''
+            ===================================================
+            PIPELINE COMPLETED SUCCESSFULLY!
+            ===================================================
             
-    //         // Archive DVC lock file (shows reproducible pipeline state)
-    //         archiveArtifacts artifacts: 'artifacts/dvc.lock', allowEmptyArchive: true
-    //     }
-    //     failure {
-    //         echo "Pipeline failed. Check MLflow UI for experiment details."
-    //         echo "Rollback command: set MODEL_VERSION to a previous timestamp"
-    //     }
-    //     success {
-    //         echo "✓ Pipeline completed successfully!"
-    //         echo "View metrics in MLflow: $MLFLOW_TRACKING_URI"
-    //         echo "DVC artifacts pushed to S3 (if PUSH_TO_S3=true)"
-    //     }
-    // }
+            Metrics: Check artifacts/metrics.json
+            API: http://<server-ip>:8000
+            Artifacts pushed to S3 via DVC
+            
+            To pull artifacts on another machine:
+              dvc pull
+            
+            ===================================================
+            '''
+        }
+        
+        failure {
+            echo '''
+            ===================================================
+            PIPELINE FAILED!
+            ===================================================
+            
+            Check the logs above for details.
+            
+            To rollback to previous model:
+              1. Set MODEL_VERSION parameter to desired version
+              2. Re-run pipeline with SKIP_TRAINING=true
+            
+            ===================================================
+            '''
+        }
+    }
 }

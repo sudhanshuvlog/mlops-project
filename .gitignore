@@ -1,22 +1,41 @@
 models/*
 src/__pycache__/*
 app.cpython-*
-# DVC
+
+# DVC managed files (tracked by DVC, not git)
+/data/loan_data.csv
+/data/processed/
+!*.dvc
+
+# DVC internals
 .dvc/config.local
 .dvc/tmp/
 .dvc/cache/
-!*.dvc  # unless you manually version files
 
 # MLflow
 mlruns/
 .mlflow/
+mlflow.db
 
-# Models (already in S3)
+# Models (tracked by DVC)
 models/*.pkl
 !models/.gitkeep
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
 venv/
 .env
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Artifacts
+artifacts/

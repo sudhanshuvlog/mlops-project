@@ -49,6 +49,35 @@ pipeline {
                 '''
             }
         }
+        // 🔥 STEP 2: Data Validation
+        stage('Data Validation') {
+            steps {
+                sh '''
+                    echo "Running data validation..."
+                    ./venv/bin/python src/data_validation.py
+                '''
+            }
+        }
+
+        // 🔥 STEP 3: Data Cleaning
+        stage('Data Cleaning') {
+            steps {
+                sh '''
+                    echo "Cleaning data..."
+                    ./venv/bin/python src/data_cleaning.py
+                '''
+            }
+        }
+
+        // 🔥 STEP 4: Feature Engineering
+        stage('Feature Engineering') {
+            steps {
+                sh '''
+                    echo "Generating features (DTI, etc)..."
+                    ./venv/bin/python src/feature_engineering.py
+                '''
+            }
+        }
 
         // stage('start mlflow server') {
         //     steps {
@@ -73,6 +102,16 @@ pipeline {
                     
                     # View pipeline DAG (for debugging)
                     ./venv/bin/dvc dag
+                '''
+            }
+        }
+
+        // 🔥 STEP 6: Evaluate Model
+        stage('Model Evaluation') {
+            steps {
+                sh '''
+                    echo "Evaluating model..."
+                    ./venv/bin/python src/evaluate.py
                 '''
             }
         }

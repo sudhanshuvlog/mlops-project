@@ -7,7 +7,6 @@ RUN pip3 install -r requirements.txt
 RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Pulling DVC artifacts from S3..."\n\
-dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage || true\n\
 dvc pull || echo "Warning: DVC pull failed - models may not be available"\n\
 echo "Starting API server..."\n\
 exec uvicorn src.app:app --host 0.0.0.0 --port 8000\n\

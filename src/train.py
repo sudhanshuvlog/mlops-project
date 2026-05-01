@@ -7,11 +7,11 @@ from preprocess import preprocess_data
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # Configure MLflow to use local backend or remote server
-mlflow.set_tracking_uri("http://localhost:5000")  # Change if using a remote MLflow server
+mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("loan-risk-prediction")
 
 def train():
-    df = pd.read_csv("data/loan_data.csv")
+    df = pd.read_csv("data/processed/featured_data.csv")
     X_train, X_test, y_train, y_test = preprocess_data(df)
 
     # Start MLflow run

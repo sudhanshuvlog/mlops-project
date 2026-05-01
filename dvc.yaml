@@ -1,15 +1,26 @@
 stages:
-  train:
-    cmd: ./venv/bin/python src/train.py
+  data_validation:
+    cmd: python src/data_validation.py
     deps:
-      - src/train.py
-      - src/preprocess.py
-      - src/s3_utils.py
+      - data/loan_data.csv
+
+  clean_data:
+    cmd: python src/data_cleaning.py
+    deps:
       - data/loan_data.csv
     outs:
+      - data/processed/cleaned_data.csv
+
+  feature_engineering:
+    cmd: python src/feature_engineering.py
+    deps:
+      - data/processed/cleaned_data.csv
+    outs:
+      - data/processed/featured_data.csv
+
+  train_model:
+    cmd: python src/train_model.py
+    deps:
+      - data/processed/featured_data.csv
+    outs:
       - models/model.pkl
-      - models/scaler.pkl
-      - models/label_encoder.pkl
-    metrics:
-      - metrics.json:
-          cache: false

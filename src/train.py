@@ -5,7 +5,6 @@ import mlflow.xgboost
 from xgboost import XGBClassifier
 from preprocess import preprocess_data
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from s3_utils import upload_model
 
 # Configure MLflow to use local backend or remote server
 mlflow.set_tracking_uri("http://localhost:5000")  # Change if using a remote MLflow server
@@ -57,25 +56,9 @@ def train():
         if acc < 0.8:
             raise Exception("Model accuracy below threshold!")
         
-        # Upload to S3
-        s3_path = upload_model("models/model.pkl")
-        print(f"Model stored at: {s3_path}")
-        mlflow.log_param("s3_model_path", s3_path)
-
-        # Also upload scaler and label encoder saved during preprocessing
-        try:
-            scaler_path = upload_model("models/scaler.pkl", model_name="scaler.pkl")
-            print(f"Scaler stored at: {scaler_path}")
-            mlflow.log_param("s3_scaler_path", scaler_path)
-        except Exception as e:
-            print(f"Warning: failed to upload scaler: {e}")
-
-        try:
-            le_path = upload_model("models/label_encoder.pkl", model_name="label_encoder.pkl")
-            print(f"Label encoder stored at: {le_path}")
-            mlflow.log_param("s3_label_encoder_path", le_path)
-        except Exception as e:
-            print(f"Warning: failed to upload label encoder: {e}")
+        # DVC will handle uploading to S3 (via dvc push in CI/CD)
+        # Just save locally - DVC tracks and versions it
+        print("✓ Model saved locally. DVC will version and push to S3.")
 
         # Register model in MLflow registry
         mlflow.register_model("runs:/{}/model".format(mlflow.active_run().info.run_id), "LoanRiskModel")

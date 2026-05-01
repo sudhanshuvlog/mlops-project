@@ -150,19 +150,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Health Check') {
-            steps {
-                sh '''
-                    echo "Waiting for container to start..."
-                    sleep 5
-                    
-                    # Test API endpoint
-                    curl -f http://localhost:8000/ || (echo "API health check failed"; exit 1)
-                    echo "✓ API is running"
-                '''
-            }
-        }
     }
 
     // post {

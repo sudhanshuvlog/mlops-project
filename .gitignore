@@ -5,7 +5,6 @@ app.cpython-*
 .dvc/config.local
 .dvc/tmp/
 .dvc/cache/
-*.dvc
 !*.dvc  # unless you manually version files
 
 # MLflow

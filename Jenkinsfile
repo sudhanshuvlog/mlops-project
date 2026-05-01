@@ -41,40 +41,26 @@ pipeline {
             }
         }
 
-        stage('DVC Setup') {
+        stage('pull data from s3 DVC') {
             steps {
                 sh '''
-                    # Initialize DVC if not already done
-                    if [ ! -d .dvc ]; then
-                        ./venv/bin/dvc init -f --no-scm
-                    fi
-                    
-                    # Ensure remote is configured
-                    ./venv/bin/dvc remote list | grep -q myremote || ./venv/bin/dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
-                    
-                    # Only fetch/checkout if dvc.lock exists (means pipeline has run before)
-                    if [ -f dvc.lock ]; then
-                        echo "dvc.lock found. Fetching artifacts from S3..."
-                        ./venv/bin/dvc fetch || echo "Warning: dvc fetch failed"
-                        ./venv/bin/dvc checkout --force || echo "Warning: dvc checkout failed"
-                    else
-                        echo "First run detected (no dvc.lock). Skipping fetch/checkout."
-                    fi
+                    echo "Pulling data and models from DVC remote (S3)..."
+                    ./venv/bin/dvc pull
                 '''
             }
         }
 
-        stage('start mlflow server') {
-            steps {
-                sh '''
-                    nohup ./venv/bin/mlflow server \
-                        --backend-store-uri sqlite:///mlflow.db \
-                        --default-artifact-root ./mlruns \
-                        --host 0.0.0.0 \
-                        --port 5000 &
-                '''
-            }
-        }
+        // stage('start mlflow server') {
+        //     steps {
+        //         sh '''
+        //             nohup ./venv/bin/mlflow server \
+        //                 --backend-store-uri sqlite:///mlflow.db \
+        //                 --default-artifact-root ./mlruns \
+        //                 --host 0.0.0.0 \
+        //                 --port 5000 &
+        //         '''
+        //     }
+        // }
 
         stage('Train Model with DVC Pipeline') {
             steps {
@@ -127,11 +113,11 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t loan-risk-app .'
-            }
-        }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         sh 'docker build -t loan-risk-app .'
+        //     }
+        // }
 
         stage('Run Container') {
             steps {

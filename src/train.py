@@ -28,7 +28,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
     """
     
     if not os.path.exists(input_path):
-        print(f"❌ Input file not found: {input_path}")
+        print(f"Input file not found: {input_path}")
         sys.exit(1)
     
     os.makedirs(models_dir, exist_ok=True)
@@ -40,7 +40,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
     
     # Load data
     df = pd.read_csv(input_path)
-    print(f"🔹 Training data shape: {df.shape}")
+    print(f"Training data shape: {df.shape}")
     
     # Preprocess
     X_train, X_test, y_train, y_test = preprocess_data(df, models_dir)
@@ -79,7 +79,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
             "f1": f1_score(y_test, preds, average='weighted'),
         }
         
-        print(f"📊 Model Metrics:")
+        print(f"Model Metrics:")
         for k, v in metrics.items():
             print(f"   {k}: {v:.4f}")
         
@@ -89,7 +89,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
         # Save model locally (DVC will track this)
         model_path = os.path.join(models_dir, "model.pkl")
         joblib.dump(model, model_path)
-        print(f"✅ Model saved to {model_path}")
+        print(f"Model saved to {model_path}")
         
         # Log model to MLflow
         mlflow.xgboost.log_model(model, "model")
@@ -98,7 +98,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
         with open("metrics.json", "w") as f:
             json.dump(metrics, f, indent=2)
         
-        print(f"✅ Metrics saved to metrics.json")
+        print(f"Metrics saved to metrics.json")
         
         return metrics
 

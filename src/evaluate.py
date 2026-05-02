@@ -30,7 +30,7 @@ def evaluate_model(
         True if model passes quality gate
     """
     
-    print("🔍 Model Evaluation Stage")
+    print("Model Evaluation Stage")
     print("=" * 50)
     
     # Load artifacts
@@ -41,7 +41,7 @@ def evaluate_model(
     
     for path in [model_path, scaler_path, encoder_path, data_path]:
         if not os.path.exists(path):
-            print(f"❌ Required file not found: {path}")
+            print(f"Required file not found: {path}")
             sys.exit(1)
     
     # Load model and preprocessors
@@ -78,31 +78,31 @@ def evaluate_model(
     }
     
     # Print results
-    print(f"\n📊 Evaluation Metrics:")
+    print(f"\nEvaluation Metrics:")
     for k, v in metrics.items():
         if isinstance(v, float):
             print(f"   {k}: {v:.4f}")
         else:
             print(f"   {k}: {v}")
     
-    print(f"\n📋 Classification Report:")
+    print(f"\nClassification Report:")
     print(classification_report(y_true, y_pred, target_names=le.classes_))
     
-    print(f"📋 Confusion Matrix:")
+    print(f"Confusion Matrix:")
     print(confusion_matrix(y_true, y_pred))
     
     # Save metrics
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
-    print(f"\n✅ Metrics saved to {metrics_path}")
+    print(f"\nMetrics saved to {metrics_path}")
     
     # Quality Gate
-    print(f"\n🚦 Quality Gate (min accuracy: {min_accuracy})")
+    print(f"\nQuality Gate (min accuracy: {min_accuracy})")
     if metrics["accuracy"] >= min_accuracy:
-        print(f"   ✅ PASSED - Model accuracy {metrics['accuracy']:.4f} >= {min_accuracy}")
+        print(f"PASSED - Model accuracy {metrics['accuracy']:.4f} >= {min_accuracy}")
         return True
     else:
-        print(f"   ❌ FAILED - Model accuracy {metrics['accuracy']:.4f} < {min_accuracy}")
+        print(f"FAILED - Model accuracy {metrics['accuracy']:.4f} < {min_accuracy}")
         sys.exit(1)
 
 

@@ -8,7 +8,7 @@ def clean_data(input_path: str, output_path: str) -> None:
     """Clean raw data and save to processed folder."""
     
     if not os.path.exists(input_path):
-        print(f"❌ Input file not found: {input_path}")
+        print(f"Input file not found: {input_path}")
         sys.exit(1)
     
     df = pd.read_csv(input_path)
@@ -48,7 +48,7 @@ def clean_data(input_path: str, output_path: str) -> None:
     
     # Save cleaned data
     df.to_csv(output_path, index=False)
-    print(f"✅ Cleaned data saved to {output_path}")
+    print(f"Cleaned data saved to {output_path}")
 
 
 if __name__ == "__main__":

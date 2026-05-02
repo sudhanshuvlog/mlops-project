@@ -9,11 +9,11 @@ def engineer_features(input_path: str, output_path: str) -> None:
     """Create features from cleaned data."""
     
     if not os.path.exists(input_path):
-        print(f"❌ Input file not found: {input_path}")
+        print(f"Input file not found: {input_path}")
         sys.exit(1)
     
     df = pd.read_csv(input_path)
-    print(f"🔹 Input shape: {df.shape}")
+    print(f"Input shape: {df.shape}")
     
     # ------------------------
     # Feature Engineering
@@ -39,15 +39,15 @@ def engineer_features(input_path: str, output_path: str) -> None:
     # 4. Encode categorical features
     df = pd.get_dummies(df, columns=["credit_bucket", "income_bucket"], drop_first=True)
     
-    print(f"🔹 Output shape: {df.shape}")
-    print(f"   Features: {list(df.columns)}")
+    print(f"Output shape: {df.shape}")
+    print(f"Features: {list(df.columns)}")
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Save
     df.to_csv(output_path, index=False)
-    print(f"✅ Featured data saved to {output_path}")
+    print(f"Featured data saved to {output_path}")
 
 
 if __name__ == "__main__":

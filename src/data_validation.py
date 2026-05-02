@@ -8,14 +8,14 @@ def validate_data(input_path: str) -> bool:
     """Validate raw data quality. Returns True if valid, exits with error if not."""
     
     if not os.path.exists(input_path):
-        print(f"❌ Data file not found: {input_path}")
+        print(f"Data file not found: {input_path}")
         sys.exit(1)
     
     df = pd.read_csv(input_path)
     errors = []
     
-    print(f"🔍 Validating data: {input_path}")
-    print(f"   Rows: {len(df)}, Columns: {list(df.columns)}")
+    print(f"Validating data: {input_path}")
+    print(f"Rows: {len(df)}, Columns: {list(df.columns)}")
     
     # Required columns check
     required_cols = ["income", "loan_amount", "credit_score", "risk"]
@@ -40,7 +40,7 @@ def validate_data(input_path: str) -> bool:
     
     # Report validation results
     if errors:
-        print("\n❌ DATA VALIDATION FAILED:")
+        print("\nDATA VALIDATION FAILED:")
         for e in errors:
             print(f"   - {e}")
         sys.exit(1)
@@ -48,9 +48,9 @@ def validate_data(input_path: str) -> bool:
     # Warnings (non-fatal)
     null_count = df.isnull().sum().sum()
     if null_count > 0:
-        print(f"   ⚠️  Warning: {null_count} null values found (will be handled in cleaning)")
+        print(f"Warning: {null_count} null values found (will be handled in cleaning)")
     
-    print("✅ Data validation passed!")
+    print("Data validation passed!")
     return True
 
 

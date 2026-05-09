@@ -5,8 +5,8 @@ stages:
     deps:
     - path: data/loan_data.csv
       hash: md5
-      md5: 3bbf9e3cbd584a01a38571886bc39393
-      size: 20946
+      md5: fd86965e28e19eb97e8c34ca8cace896
+      size: 20989
     - path: src/data_validation.py
       hash: md5
       md5: 52f3151377592d388dbeede18e998bfb
@@ -16,8 +16,8 @@ stages:
     deps:
     - path: data/loan_data.csv
       hash: md5
-      md5: 3bbf9e3cbd584a01a38571886bc39393
-      size: 20946
+      md5: fd86965e28e19eb97e8c34ca8cace896
+      size: 20989
     - path: src/data_cleaning.py
       hash: md5
       md5: 76b4ced105e01f796b85c8401785d2b4
@@ -25,15 +25,15 @@ stages:
     outs:
     - path: data/processed/cleaned_data.csv
       hash: md5
-      md5: c4842ad4faeca2aae123c7d56e144621
-      size: 20265
+      md5: 0fd541f5320815a35e0cacaa59268eb4
+      size: 20307
   feature_engineering:
     cmd: ./venv/bin/python src/feature_engineering.py
     deps:
     - path: data/processed/cleaned_data.csv
       hash: md5
-      md5: c4842ad4faeca2aae123c7d56e144621
-      size: 20265
+      md5: 0fd541f5320815a35e0cacaa59268eb4
+      size: 20307
     - path: src/feature_engineering.py
       hash: md5
       md5: 17ff0b36213c25a015e37ea18e65e137
@@ -41,15 +41,15 @@ stages:
     outs:
     - path: data/processed/featured_data.csv
       hash: md5
-      md5: 98447ec64bc46b037d7d91fbecd3818f
-      size: 40868
+      md5: 4b2f5b8418e24b72b6f3a70713afaafc
+      size: 40950
   train:
     cmd: ./venv/bin/python src/train.py
     deps:
     - path: data/processed/featured_data.csv
       hash: md5
-      md5: 98447ec64bc46b037d7d91fbecd3818f
-      size: 40868
+      md5: 4b2f5b8418e24b72b6f3a70713afaafc
+      size: 40950
     - path: src/preprocess.py
       hash: md5
       md5: ee9d72ad70e3d6bd694005aa655858a3
@@ -69,30 +69,30 @@ stages:
       size: 552
     - path: models/model.pkl
       hash: md5
-      md5: acf1339a0bc6da01cd2b3a257ecb4a67
-      size: 261463
+      md5: 6d52e313b0d7798f2ac84e440f8d002f
+      size: 255412
     - path: models/scaler.pkl
       hash: md5
-      md5: beadcbe9fe7e86dcb24ade64f05eff9d
+      md5: c3f9d86125ef979e8eafce0fdcbfdbdc
       size: 1063
   evaluate:
     cmd: ./venv/bin/python src/evaluate.py
     deps:
     - path: data/processed/featured_data.csv
       hash: md5
-      md5: 98447ec64bc46b037d7d91fbecd3818f
-      size: 40868
+      md5: 4b2f5b8418e24b72b6f3a70713afaafc
+      size: 40950
     - path: models/label_encoder.pkl
       hash: md5
       md5: 69dba1adc1a2d63662dc723a3a0238a1
       size: 552
     - path: models/model.pkl
       hash: md5
-      md5: acf1339a0bc6da01cd2b3a257ecb4a67
-      size: 261463
+      md5: 6d52e313b0d7798f2ac84e440f8d002f
+      size: 255412
     - path: models/scaler.pkl
       hash: md5
-      md5: beadcbe9fe7e86dcb24ade64f05eff9d
+      md5: c3f9d86125ef979e8eafce0fdcbfdbdc
       size: 1063
     - path: src/evaluate.py
       hash: md5
@@ -101,5 +101,5 @@ stages:
     outs:
     - path: metrics.json
       hash: md5
-      md5: 79a9bdb40bb28d3aa33c7e940c1bc8c3
-      size: 156
+      md5: 8dd22779f9e3132a15d488b23387273f
+      size: 99

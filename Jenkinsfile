@@ -2,11 +2,6 @@ pipeline {
     agent { label "ec2" }
 
     parameters {
-        string(
-            name: 'MODEL_VERSION',
-            defaultValue: '',
-            description: 'Optional: specific model version to rollback to. Leave blank for latest.'
-        )
         choice(
             name: 'SKIP_TRAINING',
             choices: ['false', 'true'],
@@ -66,6 +61,21 @@ pipeline {
                 '''
             }
         }
+
+        stage("Start Mlflow server") {
+            steps {
+                echo "Starting MLflow server in background..."
+                sh '''
+                    # Start MLflow server in background
+                    nohup ./venv/bin/mlflow server \
+                    --backend-store-uri sqlite:///mlflow.db \
+                    --default-artifact-root ./mlruns \
+                    --host 0.0.0.0 \
+                    --port 5000 & 
+                    ''' 
+                }
+        }
+
 
         stage('Run ML Pipeline') {
             when {
@@ -146,6 +156,58 @@ pipeline {
             }
         }
 
+        stage('Commit Pipeline State to Git') {
+            steps {
+                echo "Committing dvc.lock back to repository..."
+                    sh '''
+                        # Configure git
+                        git config user.email "jenkins@ci.local"
+                        git config user.name "Jenkins CI"
+                        git remote add origin-ssh  git@github.com:sudhanshuvlog/mlops-project.git || true
+                        ssh-keyscan github.com >> ~/.ssh/known_hosts || true
+                        
+                        # Check if there are changes to commit
+                        if git diff --quiet dvc.lock 2>/dev/null && git diff --quiet metrics.json 2>/dev/null; then
+                            echo "No changes to dvc.lock or metrics.json - skipping commit"
+                            # Still create tag for this build
+                            TAG_NAME="model-v${BUILD_NUMBER}"
+                        else
+                            # Add pipeline state files
+                            git add dvc.lock metrics.json
+                            
+                            # Commit with build info
+                            git commit -m "chore: Update pipeline state [Jenkins Build #${BUILD_NUMBER}]
+
+                        - Updated dvc.lock with latest pipeline run
+                        - Updated metrics.json with model performance
+                        - Triggered by: ${BUILD_URL}
+
+                        [skip ci]" || echo "Nothing to commit"
+                                                    
+                                                # Push commit
+                                                git push origin-ssh HEAD:master
+                                                fi
+                                                
+                                                # Create and push a tag for this model version
+                                                # This tag points to the CORRECT commit with dvc.lock
+                                                TAG_NAME="model-v${BUILD_NUMBER}"
+                                                git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
+
+                        Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
+                        To reproduce: git checkout ${TAG_NAME} && dvc pull"
+                        
+                        git push origin-ssh ${TAG_NAME}
+                        
+                        echo "======================================="
+                        echo "Tagged as: ${TAG_NAME}"
+                        echo "To reproduce this model:"
+                        echo "  git checkout ${TAG_NAME}"
+                        echo "  dvc pull"
+                        echo "======================================="
+                    '''
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image..."
@@ -223,14 +285,6 @@ pipeline {
             echo '''
             ===================================================
             PIPELINE FAILED!
-            ===================================================
-            
-            Check the logs above for details.
-            
-            To rollback to previous model:
-              1. Set MODEL_VERSION parameter to desired version
-              2. Re-run pipeline with SKIP_TRAINING=true
-            
             ===================================================
             '''
         }

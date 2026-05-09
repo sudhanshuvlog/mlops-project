@@ -174,6 +174,7 @@ pipeline {
                                                     
                                                 # Push commit
                                                 git remote add origin-ssh  git@github.com:sudhanshuvlog/mlops-project.git || true
+                                                ssh-keyscan github.com >> ~/.ssh/known_hosts
                                                 git push origin-ssh HEAD:feature/dev1
                                                 fi
                                                 

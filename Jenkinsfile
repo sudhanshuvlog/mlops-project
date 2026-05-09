@@ -146,6 +146,58 @@ pipeline {
             }
         }
 
+        stage('Commit Pipeline State to Git') {
+            steps {
+                echo "Committing dvc.lock back to repository..."
+                sshagent(['github-ssh-key']) {
+                    sh '''
+                        # Configure git
+                        git config user.email "jenkins@ci.local"
+                        git config user.name "Jenkins CI"
+                        
+                        # Check if there are changes to commit
+                        if git diff --quiet dvc.lock 2>/dev/null && git diff --quiet metrics.json 2>/dev/null; then
+                            echo "No changes to dvc.lock or metrics.json - skipping commit"
+                            # Still create tag for this build
+                            TAG_NAME="model-v${BUILD_NUMBER}"
+                        else
+                            # Add pipeline state files
+                            git add dvc.lock metrics.json
+                            
+                            # Commit with build info
+                            git commit -m "chore: Update pipeline state [Jenkins Build #${BUILD_NUMBER}]
+
+- Updated dvc.lock with latest pipeline run
+- Updated metrics.json with model performance
+- Triggered by: ${BUILD_URL}
+
+[skip ci]" || echo "Nothing to commit"
+                            
+                            # Push commit
+                            git push origin HEAD:main
+                        fi
+                        
+                        # Create and push a tag for this model version
+                        # This tag points to the CORRECT commit with dvc.lock
+                        TAG_NAME="model-v${BUILD_NUMBER}"
+                        git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
+
+Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
+To reproduce: git checkout ${TAG_NAME} && dvc pull"
+                        
+                        git push origin ${TAG_NAME}
+                        
+                        echo "======================================="
+                        echo "Tagged as: ${TAG_NAME}"
+                        echo "To reproduce this model:"
+                        echo "  git checkout ${TAG_NAME}"
+                        echo "  dvc pull"
+                        echo "======================================="
+                    '''
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image..."

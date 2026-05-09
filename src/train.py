@@ -47,6 +47,14 @@ def train(input_path: str = "data/processed/featured_data.csv",
     
     # Start MLflow run
     with mlflow.start_run():
+        # Log build/version info for reproducibility
+        build_number = os.environ.get("BUILD_NUMBER", "local")
+        model_tag = f"model-v{build_number}" if build_number != "local" else "local-dev"
+        
+        mlflow.set_tag("jenkins_build", build_number)
+        mlflow.set_tag("model_version_tag", model_tag)
+        mlflow.set_tag("reproducibility", f"git checkout {model_tag} && dvc pull")
+        
         # Log hyperparameters
         params = {
             "model_type": "XGBClassifier",

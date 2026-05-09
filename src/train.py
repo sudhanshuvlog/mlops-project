@@ -79,16 +79,15 @@ def train(input_path: str = "data/processed/featured_data.csv",
         # Predictions
         preds = model.predict(X_test)
         
-        # Save test data for evaluation (X_test + y_test)
+        # Save test data for evaluation
         test_dir = os.path.join(os.path.dirname(models_dir), "data", "processed")
         os.makedirs(test_dir, exist_ok=True)
         
-        # Create dataframe with X_test and y_test
-        test_data = X_test.copy()
+        # Convert numpy arrays to DataFrame and save
+        test_data = pd.DataFrame(X_test)
         test_data['risk'] = y_test
-        test_data_path = os.path.join(test_dir, "test_data.csv")
-        test_data.to_csv(test_data_path, index=False)
-        print(f"Test data saved to {test_data_path}")
+        test_data.to_csv(os.path.join(test_dir, "test_data.csv"), index=False)
+        print(f"Test data saved to {os.path.join(test_dir, 'test_data.csv')}")
         
         # Calculate metrics
         metrics = {

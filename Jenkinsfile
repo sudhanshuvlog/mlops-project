@@ -173,7 +173,8 @@ pipeline {
 [skip ci]" || echo "Nothing to commit"
                             
                             # Push commit
-                            git push origin HEAD:feature/dev1
+                            git remote add origin-ssh  git@github.com:sudhanshuvlog/mlops-project.git || true
+                            git push origin-ssh HEAD:feature/dev1
                         fi
                         
                         # Create and push a tag for this model version
@@ -184,7 +185,7 @@ pipeline {
 Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
 To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         
-                        git push origin ${TAG_NAME}
+                        git push origin-ssh ${TAG_NAME}
                         
                         echo "======================================="
                         echo "Tagged as: ${TAG_NAME}"

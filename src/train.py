@@ -85,7 +85,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
         
         # Create dataframe with X_test and y_test
         test_data = X_test.copy()
-        test_data['risk'] = y_test.values
+        test_data['risk'] = y_test
         test_data_path = os.path.join(test_dir, "test_data.csv")
         test_data.to_csv(test_data_path, index=False)
         print(f"Test data saved to {test_data_path}")

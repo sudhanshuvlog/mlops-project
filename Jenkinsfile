@@ -149,7 +149,6 @@ pipeline {
         stage('Commit Pipeline State to Git') {
             steps {
                 echo "Committing dvc.lock back to repository..."
-                sshagent(['github-ssh-key']) {
                     sh '''
                         # Configure git
                         git config user.email "jenkins@ci.local"
@@ -194,7 +193,6 @@ To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         echo "  dvc pull"
                         echo "======================================="
                     '''
-                }
             }
         }
 

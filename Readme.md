@@ -36,6 +36,39 @@ A complete MLOps pipeline for training, versioning, and deploying a machine lear
                         └──────────────────────┘
 ```
 
+## Model Training Steps
+
+```
+
+         +------------------------+              
+         | data/loan_data.csv.dvc |              
+         +------------------------+              
+               ***          **                   
+              *               **                 
+            **                  **               
++-----------------+         +------------+       
+| data_validation |         | clean_data |       
++-----------------+         +------------+       
+                                   *             
+                                   *             
+                                   *             
+                        +---------------------+  
+                        | feature_engineering |  
+                        +---------------------+  
+                            ***         **       
+                           *              **     
+                         **                 **   
+                   +-------+                  *  
+                   | train |                **   
+                   +-------+              **     
+                            ***         **       
+                               *      **         
+                                **   *           
+                             +----------+        
+                             | evaluate |        
+                             +----------+   
+```
+
 ---
 
 ## Prerequisites

@@ -174,7 +174,7 @@ pipeline {
 [skip ci]" || echo "Nothing to commit"
                             
                             # Push commit
-                            git push origin HEAD:main
+                            git push origin HEAD:feature/dev1
                         fi
                         
                         # Create and push a tag for this model version

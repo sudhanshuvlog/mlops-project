@@ -166,24 +166,24 @@ pipeline {
                             # Commit with build info
                             git commit -m "chore: Update pipeline state [Jenkins Build #${BUILD_NUMBER}]
 
-- Updated dvc.lock with latest pipeline run
-- Updated metrics.json with model performance
-- Triggered by: ${BUILD_URL}
+                        - Updated dvc.lock with latest pipeline run
+                        - Updated metrics.json with model performance
+                        - Triggered by: ${BUILD_URL}
 
-[skip ci]" || echo "Nothing to commit"
-                            
-                            # Push commit
-                            git remote add origin-ssh  git@github.com:sudhanshuvlog/mlops-project.git || true
-                            git push origin-ssh HEAD:feature/dev1
-                        fi
-                        
-                        # Create and push a tag for this model version
-                        # This tag points to the CORRECT commit with dvc.lock
-                        TAG_NAME="model-v${BUILD_NUMBER}"
-                        git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
+                        [skip ci]" || echo "Nothing to commit"
+                                                    
+                                                # Push commit
+                                                git remote add origin-ssh  git@github.com:sudhanshuvlog/mlops-project.git || true
+                                                git push origin-ssh HEAD:feature/dev1
+                                                fi
+                                                
+                                                # Create and push a tag for this model version
+                                                # This tag points to the CORRECT commit with dvc.lock
+                                                TAG_NAME="model-v${BUILD_NUMBER}"
+                                                git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
 
-Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
-To reproduce: git checkout ${TAG_NAME} && dvc pull"
+                        Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
+                        To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         
                         git push origin-ssh ${TAG_NAME}
                         

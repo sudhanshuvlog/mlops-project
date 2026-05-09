@@ -362,21 +362,6 @@ ml-model-deployment/
 └── Dockerfile              (container config)
 ```
 
-### S3 Storage Structure
-
-```
-mlops-loan-risk-gfg/
-├── dvc-storage/            (DVC remote)
-│   └── files/...           (versioned artifacts)
-├── models/
-│   ├── 20260501-120000/    (timestamp)
-│   │   ├── model.pkl
-│   │   ├── scaler.pkl
-│   │   └── label_encoder.pkl
-│   ├── 20260430-150000/
-│   └── ...
-```
-
 ---
 
 ## Part 8: Model Versioning & Rollback

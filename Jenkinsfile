@@ -62,6 +62,22 @@ pipeline {
             }
         }
 
+        stage("Start Mlflow server") {
+            steps {
+                echo "Starting MLflow server in background..."
+                sh '''
+                    # Start MLflow server in background
+                    nohup ./venv/bin/mlflow server \
+                    --backend-store-uri sqlite:///mlflow.db \
+                    --default-artifact-root ./mlruns \
+                    --host 0.0.0.0 \
+                    --port 5000 &  
+                    | true  # Prevent nohup from exiting with non-zero code
+                    ''' 
+                }
+        }
+
+
         stage('Run ML Pipeline') {
             when {
                 expression { params.SKIP_TRAINING != 'true' }

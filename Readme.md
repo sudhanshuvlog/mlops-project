@@ -1,6 +1,6 @@
 # ML Model Deployment: Loan Risk Prediction
 
-A complete MLOps pipeline for training, versioning, and deploying a machine learning model (XGBoost) with **DVC** for artifact versioning, **MLflow** for experiment tracking, and **Jenkins** for CI/CD automation.
+A complete MLOps pipeline for training, versioning, and deploying a machine learning model (XGBoost) with **DVC** for artifact versioning, **MLflow** for experiment tracking, **Jenkins** for CI/CD automation & Docker for running the prediction webapp.
 
 ## Architecture Overview
 
@@ -44,11 +44,11 @@ A complete MLOps pipeline for training, versioning, and deploying a machine lear
 - Python 3.9+
 - Git
 - AWS account with S3 access
-- Docker (for local testing)
+- Docker
 
 ### AWS Setup
 - **S3 Bucket**: `mlops-loan-risk-gfg`
-- **IAM User** with S3 access (for credentials)
+- **IAM Role** to provide ec2 jenkins worker node access to aws s3
 - **EC2 Instance** for Jenkins agent (t2.medium recommended)
 
 ### Jenkins Server
@@ -60,11 +60,11 @@ A complete MLOps pipeline for training, versioning, and deploying a machine lear
 
 ## Part 1: Local Development Setup
 
-### Step 1: Clone and Create Virtual Environment
+### Step 1: Clone and Create Virtual Environment  (this needs to be done in our local system)
 
 ```bash
 git clone <repo-url>
-cd ml-model-deployment
+cd mlops-project
 
 # Create virtual environment
 python3 -m venv venv
@@ -76,14 +76,14 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-### Step 2: Install Dependencies
+### Step 2: Install Dependencies  (this needs to be done in our local system)
 
 ```bash
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
-### Step 3: Configure AWS Credentials
+### Step 3: Configure AWS Credentials On Local System For Testing  (this needs to be done in our local system)
 
 ```bash
 # Set environment variables or use AWS CLI
@@ -95,7 +95,7 @@ export AWS_SECRET_ACCESS_KEY=...
 export AWS_DEFAULT_REGION=ap-south-1
 ```
 
-### Step 4: Initialize DVC and Set Remote Storage
+### Step 4: Initialize DVC and Set Remote Storage  (this needs to be done in our local system)
 
 ```bash
 # Initialize DVC (one-time)
@@ -105,20 +105,20 @@ dvc init --no-scm
 dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
 ```
 
-### Step 5: Generate Training Data
+### Step 5: Generate Training Data  (this needs to be done in our local system)
 
 ```bash
 python data-generator.py
 # Creates: data/loan_data.csv
 ```
 
-### Step 6: Run dvc repro
+### Step 6: Run dvc repro  (this needs to be done in our local system)
 
 ```bash
 dvc repro
 ```
 
-### Step 7: Push Artifacts to S3
+### Step 7: Push Artifacts to S3 (this needs to be done in our local system)
 
 ```bash
 dvc push
@@ -130,20 +130,49 @@ dvc status --cloud
 ## Part 2: Jenkins CI/CD Pipeline Setup
 
 ### Prerequisites
-- Jenkins server running (Docker or standalone)
-- EC2 agent with Python 3.9+, Docker, Git
-- AWS credentials stored in Jenkins
+- Jenkins server running (Docker or standalone) - `docker run -p 8080:8080 -p 50000:50000 -dit --name jenkins --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk21`
+- EC2 agent with Python 3.9+, Docker, Git - Run the below Command to download java JDK
 
-### Step 1: Add AWS Credentials to Jenkins
+`wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.rpm`
+`yum install jdk-21_linux-x64_bin.rpm -y`
 
-1. Go to Jenkins → **Manage Credentials** → **System** → **Global credentials**
-2. Click **Add Credentials** → Kind: **Username with password**
-   - Username: `aws_access_key_id` → Password: `AKIA...`
-   - ID: `aws_access_key_id`
-3. Repeat for `aws_secret_access_key`
-4. Or use **AWS Credentials Plugin**
+### Step 1: Create IAM Role to Provide EC2 Instance access to s3
+- Create IAM Role -> Go to AWS → IAM → Roles → Create Role:
+- Trusted entity: EC2
+- Attach policy like:
 
-### Step 2: Create Jenkins Pipeline Job
+```json
+{
+    "Version": "2026-05-09",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::mlops-loan-risk-gfg"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::mlops-loan-risk-gfg/*"
+        }
+    ]
+}
+```
+
+- Attach Role to EC2 (Jenkins Worker)
+- EC2 → Instance → Actions → Security → Modify IAM Role - Attach the role
+
+### Step 2: Setup Github SSH Keys For Pushing The Dvc.lock From The Jenkins Pipeline
+
+- `ssh-keygen -t rsa` - to create key pairs from jenkins ec2 worker node
+- Go to github `repo deployed keys` add the public key over there, by providing the push access (this is required)
+
+### Step 3: Create Jenkins Pipeline Job
 
 1. Jenkins → **New Item** → **Pipeline**
 2. Name: `loan-risk-pipeline`
@@ -154,17 +183,16 @@ dvc status --cloud
    - Script Path: `Jenkinsfile`
 4. **Save**
 
-### Step 3: Configure Build Triggers (Optional)
+### Step 4: Configure Build Triggers (Optional)
 
 For auto-trigger on Git push:
 - GitHub: Configure webhook to send to Jenkins
 - Or: Poll SCM (`H/5 * * * *` every 5 min)
 
-### Step 4: Run Pipeline
+### Step 5: Run Pipeline
 
 Click **Build** or **Build with Parameters** (if defined):
 - `SKIP_TRAINING`: false (train) or true (reuse S3)
-- `MODEL_VERSION`: leave blank for latest, or enter timestamp to rollback
 
 ### What Happens in Pipeline
 
@@ -277,7 +305,6 @@ docker rm webapp
 - **Base**: Python 3.10-slim
 - **Entrypoint**: `dvc pull` + start API
 - **Port**: 8000
-- **Environment**: AWS credentials (injected at runtime)
 
 ---
 
@@ -337,34 +364,8 @@ GET /
 - **Recall**: true positives / actual positives
 - **F1 Score**: harmonic mean of precision & recall
 
----
 
-## Part 7: Artifact Management
-
-### File Structure
-
-```
-ml-model-deployment/
-├── models/
-│   ├── model.pkl           (XGBoost model)
-│   ├── scaler.pkl          (StandardScaler)
-│   └── label_encoder.pkl   (LabelEncoder)
-├── data/
-│   └── loan_data.csv       (training data)
-├── src/
-│   ├── app.py              (FastAPI app)
-│   ├── predict.py          (prediction logic)
-│   ├── train.py            (training script)
-│   └── preprocess.py       (preprocessing)
-├── dvc.yaml                (pipeline definition)
-├── dvc.lock                (reproducible state)
-├── Jenkinsfile             (CI/CD pipeline)
-└── Dockerfile              (container config)
-```
-
----
-
-## Part 8: Model Versioning & Rollback
+## Part 7: Model Versioning & Rollback
 
 ### Version Tracking
 
@@ -388,17 +389,9 @@ dvc checkout
 # Redeploy
 ```
 
-**Option 2: Via Jenkins Parameter**
-```bash
-# Set MODEL_VERSION parameter when running Jenkins
-# e.g., MODEL_VERSION=20260430-150000
-
-# Container will download that specific version
-```
-
 ---
 
-## Part 9: Common Commands
+## Part 8: Common Commands
 
 ### Development
 ```bash
@@ -450,7 +443,7 @@ Jenkins → Build → Console Output
 
 ---
 
-## Part 10: Troubleshooting
+## Part 9: Troubleshooting
 
 ### DVC Issues
 
@@ -470,64 +463,6 @@ dvc remote list
 # Reconfigure if needed
 dvc remote remove myremote
 dvc remote add -d myremote s3://mlops-loan-risk-gfg/dvc-storage
-```
-
-### MLflow Issues
-
-**Error: `ModuleNotFoundError: No module named 'pkg_resources'`**
-```bash
-pip install --force-reinstall setuptools>=65.0
-```
-
-**MLflow UI not accessible**
-```bash
-# Check if server is running
-ps aux | grep mlflow
-
-# Start server
-mlflow ui --host 0.0.0.0 --port 5000
-```
-
-### Jenkins Issues
-
-**Error: `Cannot uninstall requests`**
-```bash
-# Use virtual environment in Jenkins
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-```
-
-**Docker: Models not found in container**
-```bash
-# Check if dvc pull is working in Dockerfile entrypoint
-docker logs <container-id>
-
-# Manually test
-docker run -it loan-risk-app bash
-./entrypoint.sh  # should pull models
-```
-
-### API Issues
-
-**Error: `Connection refused` on `/predict`**
-```bash
-# Check if container is running
-docker ps
-
-# Check logs
-docker logs webapp
-
-# Verify port mapping
-docker port webapp
-```
-
-**Error: Model files not found**
-```bash
-# Ensure dvc pull ran successfully
-docker exec webapp ls -la models/
-
-# Or rebuild image
-docker build --no-cache -t loan-risk-app .
 ```
 
 ---
@@ -566,17 +501,6 @@ DVC_REMOTE=myremote
 | `src/predict.py` | Prediction logic |
 | `src/preprocess.py` | Data preprocessing |
 | `src/app.py` | FastAPI application |
-
----
-
-## Next Steps
-
-1. **Local Testing**: Run `dvc repro` and `mlflow ui` locally
-2. **AWS Setup**: Configure S3 bucket and IAM credentials
-3. **Jenkins Setup**: Create pipeline job and configure agent
-4. **Deploy**: Run Jenkins pipeline to train and deploy
-5. **Monitor**: View MLflow dashboard for experiment tracking
-6. **Iterate**: Make changes, commit, and re-run Jenkins
 
 ---
 

@@ -36,6 +36,7 @@ stages:
       - models/scaler.pkl
       - models/label_encoder.pkl
       - models/feature_names.pkl
+      - data/processed/test_data.csv
 
   # Stage 5: Evaluate model (quality gate)
   evaluate:
@@ -45,7 +46,7 @@ stages:
       - models/model.pkl
       - models/scaler.pkl
       - models/label_encoder.pkl
-      - data/processed/featured_data.csv
+      - data/processed/test_data.csv
     metrics:
       - metrics.json:
           cache: false

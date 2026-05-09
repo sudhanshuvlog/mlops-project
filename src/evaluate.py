@@ -12,7 +12,7 @@ from sklearn.metrics import (
 
 
 def evaluate_model(
-    data_path: str = "data/processed/featured_data.csv",
+    data_path: str = "data/processed/test_data.csv",
     models_dir: str = "models",
     metrics_path: str = "metrics.json",
     min_accuracy: float = 0.70
@@ -21,7 +21,7 @@ def evaluate_model(
     Evaluate model and act as quality gate.
     
     Args:
-        data_path: Path to test data
+        data_path: Path to test data (test_data.csv from training stage)
         models_dir: Directory containing model artifacts
         metrics_path: Path to save metrics JSON
         min_accuracy: Minimum accuracy threshold

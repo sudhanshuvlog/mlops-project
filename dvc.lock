@@ -1,0 +1,105 @@
+schema: '2.0'
+stages:
+  data_validation:
+    cmd: ./venv/bin/python src/data_validation.py
+    deps:
+    - path: data/loan_data.csv
+      hash: md5
+      md5: 3bbf9e3cbd584a01a38571886bc39393
+      size: 20946
+    - path: src/data_validation.py
+      hash: md5
+      md5: 52f3151377592d388dbeede18e998bfb
+      size: 1851
+  clean_data:
+    cmd: ./venv/bin/python src/data_cleaning.py
+    deps:
+    - path: data/loan_data.csv
+      hash: md5
+      md5: 3bbf9e3cbd584a01a38571886bc39393
+      size: 20946
+    - path: src/data_cleaning.py
+      hash: md5
+      md5: 76b4ced105e01f796b85c8401785d2b4
+      size: 1615
+    outs:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: c4842ad4faeca2aae123c7d56e144621
+      size: 20265
+  feature_engineering:
+    cmd: ./venv/bin/python src/feature_engineering.py
+    deps:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: c4842ad4faeca2aae123c7d56e144621
+      size: 20265
+    - path: src/feature_engineering.py
+      hash: md5
+      md5: 17ff0b36213c25a015e37ea18e65e137
+      size: 1691
+    outs:
+    - path: data/processed/featured_data.csv
+      hash: md5
+      md5: 98447ec64bc46b037d7d91fbecd3818f
+      size: 40868
+  train:
+    cmd: ./venv/bin/python src/train.py
+    deps:
+    - path: data/processed/featured_data.csv
+      hash: md5
+      md5: 98447ec64bc46b037d7d91fbecd3818f
+      size: 40868
+    - path: src/preprocess.py
+      hash: md5
+      md5: ee9d72ad70e3d6bd694005aa655858a3
+      size: 1690
+    - path: src/train.py
+      hash: md5
+      md5: f8a229d46e10e41e62e1749841c7d3d7
+      size: 3722
+    outs:
+    - path: models/feature_names.pkl
+      hash: md5
+      md5: 41025627f2a39d69c51e44a2e5a37d29
+      size: 60
+    - path: models/label_encoder.pkl
+      hash: md5
+      md5: 69dba1adc1a2d63662dc723a3a0238a1
+      size: 552
+    - path: models/model.pkl
+      hash: md5
+      md5: acf1339a0bc6da01cd2b3a257ecb4a67
+      size: 261463
+    - path: models/scaler.pkl
+      hash: md5
+      md5: beadcbe9fe7e86dcb24ade64f05eff9d
+      size: 1063
+  evaluate:
+    cmd: ./venv/bin/python src/evaluate.py
+    deps:
+    - path: data/processed/featured_data.csv
+      hash: md5
+      md5: 98447ec64bc46b037d7d91fbecd3818f
+      size: 40868
+    - path: models/label_encoder.pkl
+      hash: md5
+      md5: 69dba1adc1a2d63662dc723a3a0238a1
+      size: 552
+    - path: models/model.pkl
+      hash: md5
+      md5: acf1339a0bc6da01cd2b3a257ecb4a67
+      size: 261463
+    - path: models/scaler.pkl
+      hash: md5
+      md5: beadcbe9fe7e86dcb24ade64f05eff9d
+      size: 1063
+    - path: src/evaluate.py
+      hash: md5
+      md5: 34b56a701b509a9c72296bdfdb1e5d54
+      size: 3527
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: 79a9bdb40bb28d3aa33c7e940c1bc8c3
+      size: 156

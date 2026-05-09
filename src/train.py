@@ -1,7 +1,6 @@
 """Model Training Stage - Train and save the loan risk model."""
 import pandas as pd
 import joblib
-import json
 import os
 import sys
 
@@ -79,16 +78,6 @@ def train(input_path: str = "data/processed/featured_data.csv",
         # Predictions
         preds = model.predict(X_test)
         
-        # Save test data for evaluation
-        test_dir = os.path.join(os.path.dirname(models_dir), "data", "processed")
-        os.makedirs(test_dir, exist_ok=True)
-        
-        # Convert numpy arrays to DataFrame and save
-        test_data = pd.DataFrame(X_test)
-        test_data['risk'] = y_test
-        test_data.to_csv(os.path.join(test_dir, "test_data.csv"), index=False)
-        print(f"Test data saved to {os.path.join(test_dir, 'test_data.csv')}")
-        
         # Calculate metrics
         metrics = {
             "accuracy": accuracy_score(y_test, preds),
@@ -112,11 +101,7 @@ def train(input_path: str = "data/processed/featured_data.csv",
         # Log model to MLflow
         mlflow.xgboost.log_model(model, "model")
         
-        # Save metrics to JSON (for DVC metrics tracking)
-        with open("metrics.json", "w") as f:
-            json.dump(metrics, f, indent=2)
-        
-        print(f"Metrics saved to metrics.json")
+        print("Training complete!")
         
         return metrics
 

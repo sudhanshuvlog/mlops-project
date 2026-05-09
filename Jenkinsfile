@@ -2,11 +2,6 @@ pipeline {
     agent { label "ec2" }
 
     parameters {
-        string(
-            name: 'MODEL_VERSION',
-            defaultValue: '',
-            description: 'Optional: specific model version to rollback to. Leave blank for latest.'
-        )
         choice(
             name: 'SKIP_TRAINING',
             choices: ['false', 'true'],
@@ -275,14 +270,6 @@ pipeline {
             echo '''
             ===================================================
             PIPELINE FAILED!
-            ===================================================
-            
-            Check the logs above for details.
-            
-            To rollback to previous model:
-              1. Set MODEL_VERSION parameter to desired version
-              2. Re-run pipeline with SKIP_TRAINING=true
-            
             ===================================================
             '''
         }

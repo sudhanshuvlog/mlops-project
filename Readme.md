@@ -55,20 +55,21 @@ A complete MLOps pipeline for training, versioning, and deploying a machine lear
                         +---------------------+  
                         | feature_engineering |  
                         +---------------------+  
-                            ***         **       
-                           *              **     
-                         **                 **   
-                   +-------+                  *  
-                   | train |                **   
-                   +-------+              **     
-                            ***         **       
-                               *      **         
-                                **   *           
-                             +----------+        
-                             | evaluate |        
-                             +----------+   
+                                    *              
+                                    *                 
+                                    *                  
+                                +-------+                 
+                                | train |                  
+                                +-------+                  
+                                    *              
+                                    *              
+                                    *           
+                                +----------+        
+                                | evaluate |        
+                                +----------+   
 ```
 
+![Pipeline](pipeline.png)
 ---
 
 ## Prerequisites

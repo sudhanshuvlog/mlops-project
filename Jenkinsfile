@@ -193,7 +193,7 @@ pipeline {
                                                 # TAG_NAME="model-v${BUILD_NUMBER}"
                                                 # git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
 
-                        Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
+                        $(cat metrics.json 2>/dev/null || echo 'N/A')
                         # To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         
                         # git push origin-ssh ${TAG_NAME}

@@ -196,7 +196,7 @@ pipeline {
                         Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
                         To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         
-                        git push origin-ssh ${TAG_NAME}
+                        // git push origin-ssh ${TAG_NAME}
                         
                         echo "======================================="
                         echo "Tagged as: ${TAG_NAME}"

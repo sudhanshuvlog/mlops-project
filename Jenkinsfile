@@ -201,7 +201,7 @@ pipeline {
                         echo "======================================="
                         # echo "Tagged as: ${TAG_NAME}"
                         echo "To reproduce this model:"
-                        echo "  git checkout ${TAG_NAME}"
+                        # echo "  git checkout ${TAG_NAME}"
                         echo "  dvc pull"
                         echo "======================================="
                     '''

@@ -177,7 +177,7 @@ dvc status --cloud
 
 ```json
 {
-    "Version": "2026-05-09",
+    "Version": "2012-10-17",
     "Statement": [
         {
             "Effect": "Allow",

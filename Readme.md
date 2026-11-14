@@ -164,11 +164,11 @@ dvc status --cloud
 ## Part 2: Jenkins CI/CD Pipeline Setup
 
 ### Prerequisites
-- Jenkins server running (Docker or standalone) - `docker run -p 8080:8080 -p 50000:50000 -dit --name jenkins --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk21`
+- Jenkins server running (Docker or standalone) - `docker run -p 8080:8080 -p 50000:50000 -dit --name jenkins --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk25`
 - EC2 agent with Python 3.9+, Docker, Git - Run the below Command to download java JDK
 
-`wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.rpm`
-`yum install jdk-21_linux-x64_bin.rpm -y`
+`wget https://download.oracle.com/java/25/latest/jdk-25_linux-x64_bin.rpm`
+`yum install jdk-25_linux-x64_bin.rpm -y`
 
 ### Step 1: Create IAM Role to Provide EC2 Instance access to s3
 - Create IAM Role -> Go to AWS → IAM → Roles → Create Role:

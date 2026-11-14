@@ -190,18 +190,18 @@ pipeline {
                                                 
                                                 # Create and push a tag for this model version
                                                 # This tag points to the CORRECT commit with dvc.lock
-                                                TAG_NAME="model-v${BUILD_NUMBER}"
-                                                git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
+                                                # TAG_NAME="model-v${BUILD_NUMBER}"
+                                                # git tag -a ${TAG_NAME} -m "Model version from Jenkins Build #${BUILD_NUMBER}
 
-                        Metrics: $(cat metrics.json 2>/dev/null || echo 'N/A')
-                        To reproduce: git checkout ${TAG_NAME} && dvc pull"
+                        echo $(cat metrics.json 2>/dev/null || echo 'N/A')
+                        # To reproduce: git checkout ${TAG_NAME} && dvc pull"
                         
-                        // git push origin-ssh ${TAG_NAME}
+                        # git push origin-ssh ${TAG_NAME}
                         
                         echo "======================================="
-                        echo "Tagged as: ${TAG_NAME}"
+                        # echo "Tagged as: ${TAG_NAME}"
                         echo "To reproduce this model:"
-                        echo "  git checkout ${TAG_NAME}"
+                        # echo "  git checkout ${TAG_NAME}"
                         echo "  dvc pull"
                         echo "======================================="
                     '''

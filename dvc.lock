@@ -5,8 +5,8 @@ stages:
     deps:
     - path: data/loan_data.csv
       hash: md5
-      md5: 8b05273c917de0b2d3d4ff25bfe5efa8
-      size: 20946
+      md5: 0f02fc883f46578e7330b3f958188b59
+      size: 21028
     - path: src/data_validation.py
       hash: md5
       md5: 52f3151377592d388dbeede18e998bfb
@@ -16,8 +16,8 @@ stages:
     deps:
     - path: data/loan_data.csv
       hash: md5
-      md5: 8b05273c917de0b2d3d4ff25bfe5efa8
-      size: 20946
+      md5: 0f02fc883f46578e7330b3f958188b59
+      size: 21028
     - path: src/data_cleaning.py
       hash: md5
       md5: 76b4ced105e01f796b85c8401785d2b4

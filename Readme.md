@@ -4,6 +4,8 @@ A complete MLOps pipeline for training, versioning, and deploying a machine lear
 
 ## Architecture Overview
 
+![Mermaid Diagram](mermaid-diagram.png)
+
 ```
 ┌─────────────────────┐
 │  Git Repository     │ (dvc.yaml, dvc.lock, code)

@@ -1,16 +1,16 @@
 schema: '2.0'
 stages:
   data_validation:
-    cmd: ./venv/bin/python src/data_validation.py
+    cmd: python src/data_validation.py
     deps:
     - path: data/loan_data.csv
       hash: md5
-      md5: 0f02fc883f46578e7330b3f958188b59
-      size: 21028
+      md5: 02a56e679fed778a6bc9d095834784f3
+      size: 21072
     - path: src/data_validation.py
       hash: md5
-      md5: 52f3151377592d388dbeede18e998bfb
-      size: 1851
+      md5: 2eab305164ecc221b1686565e6941ac4
+      size: 1909
   clean_data:
     cmd: ./venv/bin/python src/data_cleaning.py
     deps:
